@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: security
+  config:
+    import: 'classpath:credentials.yml'
+  profiles:
+    active: dev
+server:
+  port: ${PORT}
