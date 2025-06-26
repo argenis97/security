@@ -15,5 +15,5 @@ server:
   servlet:
     context-path: /users-dev/api
 token:
-  key: ${SECRET_KEY}
   expiration: ${TOKEN_EXPIRATION}
+  secret: ${TOKEN_SECRET}

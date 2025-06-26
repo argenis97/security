@@ -1,9 +1,15 @@
 package com.arod.security.persistence.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "user", schema = "application")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class AppUser {
 
     @Id
@@ -16,4 +22,11 @@ public class AppUser {
 
     @Column(name = "password", nullable = false)
     private String password;
+
+    @Column(name = "email", nullable = false)
+    private String email;
+
+    @ManyToOne
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 }
