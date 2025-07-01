@@ -17,34 +17,45 @@ import java.util.Optional;
 @Component
 public class JWTUtil {
 
-    public JWTUtil(@Value("${token.expiration}") Long expiration
-            , @Value("${token.secret}") String secret) {
+    public JWTUtil(@Value("${token.secret}") String key
+            , @Value("${token.expiration}") Long expiration) {
         this.expiration = expiration;
-        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
-    }
-
-    public String generateToken(UserDetails user){
-        return Jwts.builder()
-                .signWith(key)
-                .setSubject(user.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expiration))
-                .compact();
+        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(key));
     }
 
     public String getToken(HttpServletRequest request) {
         String token = request.getHeader(AUTHORIZATION);
 
-        if (StringUtils.hasText(token) && token.contains(BEARER))
+        if (!StringUtils.hasText(token))
+            return null;
+
+        if (token.contains(BEARER))
             token = token.replaceAll(BEARER, "");
 
         return token;
     }
 
-    public String getSubject(Claims claims) {
+    public String generateToken(UserDetails user) {
+        return Jwts.builder()
+                .signWith(key)
+                .setSubject(user.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000 * expiration))
+                .compact();
+    }
+
+    public Claims getClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    public String getUserName(Claims claims) {
         return Optional.ofNullable(claims)
                 .map(Claims::getSubject)
-                .orElse(null);
+                .orElse("");
     }
 
     public Date getExpiration(Claims claims) {
@@ -53,39 +64,16 @@ public class JWTUtil {
                 .orElse(null);
     }
 
-    public boolean isExpired(String token) {
-        return isExpired(getClaims(token));
-    }
-
-    public boolean isExpired(Claims claims) {
+    public boolean isValid(Claims claims, UserDetails user) {
         return Optional.ofNullable(claims)
-                .filter(clm -> clm.getExpiration().compareTo(new Date(System.currentTimeMillis())) > 0)
-                .isEmpty();
-    }
-
-    public Claims getClaims(String token){
-        return Optional.ofNullable(token)
-                .map(tok -> Jwts.parserBuilder()
-                        .setSigningKey(key)
-                        .build()
-                        .parseClaimsJws(tok)
-                        .getBody())
-                .orElse(null);
-    }
-
-    public boolean validateToken(UserDetails user, String token) {
-        return validateToken(user, getClaims(token));
-    }
-
-    public boolean validateToken(UserDetails user, Claims claims) {
-        return Optional.ofNullable(claims)
-                .filter(clm -> !isExpired(clm) && clm.getSubject().equals(user.getUsername()))
+                .filter(clm -> clm.getExpiration().compareTo(new Date(System.currentTimeMillis())) > 0
+                    && clm.getSubject().equals(user.getUsername()))
                 .isPresent();
     }
 
-    private static final String AUTHORIZATION = "authorization";
-    private static final String BEARER = "Bearer";
-
     private final Long expiration;
     private final Key key;
+
+    private static final String AUTHORIZATION = "authorization";
+    private static final String BEARER = "Bearer";
 }
