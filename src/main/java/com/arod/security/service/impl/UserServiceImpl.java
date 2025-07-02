@@ -6,7 +6,9 @@ import com.arod.security.mapper.UserMapper;
 import com.arod.security.persistence.entity.AppUser;
 import com.arod.security.persistence.repository.UserRepository;
 import com.arod.security.service.UserService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,9 +16,10 @@ import java.util.Optional;
 @Service
 public class UserServiceImpl implements UserService {
 
-    public UserServiceImpl(UserRepository repository, UserMapper mapper) {
+    public UserServiceImpl(UserRepository repository, UserMapper mapper, BCryptPasswordEncoder encoder) {
         this.repository = repository;
         this.mapper = mapper;
+        this.encoder = encoder;
     }
 
     @Override
@@ -36,6 +39,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDTO save(UserDTO request) {
         AppUser user = mapper.toEntity(request);
+        user.setPassword(encoder.encode(request.getPassword()));
 
         user = repository.save(user);
 
@@ -63,6 +67,9 @@ public class UserServiceImpl implements UserService {
 
         mapper.updateValues(request, user);
 
+        if (!StringUtils.hasText(request.getPassword()))
+            user.setPassword(encoder.encode(request.getPassword()));
+
         user = repository.save(user);
 
         return Optional.ofNullable(mapper.toDTO(user));
@@ -76,4 +83,5 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repository;
     private final UserMapper mapper;
+    private final BCryptPasswordEncoder encoder;
 }
