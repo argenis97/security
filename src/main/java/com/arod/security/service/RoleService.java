@@ -17,4 +17,6 @@ public interface RoleService {
     boolean delete(Long id);
 
     Optional<RoleResponse> update(Long id, RoleDTO role);
+
+    List<RoleResponse> findAll();
 }

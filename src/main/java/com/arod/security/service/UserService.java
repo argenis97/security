@@ -18,4 +18,6 @@ public interface UserService {
     Optional<UserResponseDTO> update(Long id, UserDTO request);
 
     Optional<UserResponseDTO> findByName(String name);
+
+    public List<UserResponseDTO> findAll();
 }

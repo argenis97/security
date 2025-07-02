@@ -81,6 +81,14 @@ public class UserServiceImpl implements UserService {
                 .map(mapper::toDTO);
     }
 
+    @Override
+    public List<UserResponseDTO> findAll() {
+        return repository.findAll()
+                .stream()
+                .map(mapper::toDTO)
+                .toList();
+    }
+
     private final UserRepository repository;
     private final UserMapper mapper;
     private final BCryptPasswordEncoder encoder;

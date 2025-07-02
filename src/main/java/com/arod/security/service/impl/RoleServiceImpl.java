@@ -74,6 +74,14 @@ public class RoleServiceImpl implements RoleService {
         return Optional.of(mapper.toDTO(repository.save(entity)));
     }
 
+    @Override
+    public List<RoleResponse> findAll() {
+        return repository.findAll()
+                .stream()
+                .map(mapper::toDTO)
+                .toList();
+    }
+
     protected boolean existsPermName(RolePermission permission, List<String> permissionNames){
         return permissionNames.stream().anyMatch(permName -> permName.equals(permission.getName()));
     }
