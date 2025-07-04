@@ -61,13 +61,7 @@ public class RoleServiceImpl implements RoleService {
 
         Role entity = oRole.get();
 
-        List<Long> permissionDelete = entity.getPermissions()
-                        .stream().filter(perm -> !existsPermName(perm, role.getPermissions()))
-                .map(RolePermission::getId).toList();
-
-        permissionRepository.deleteAllById(permissionDelete);
-
-        entity.getPermissions().removeIf(perm -> permissionDelete.contains(perm.getId()));
+        entity.getPermissions().removeIf(perm -> !existsPermName(perm, role.getPermissions()));
 
         mapper.update(role, entity);
 

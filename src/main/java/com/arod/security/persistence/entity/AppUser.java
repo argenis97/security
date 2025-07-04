@@ -26,7 +26,7 @@ public class AppUser {
     @Column(name = "email", nullable = false)
     private String email;
 
-    @ManyToOne
+    @ManyToOne(cascade = {})
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 }

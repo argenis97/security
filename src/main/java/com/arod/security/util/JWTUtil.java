@@ -1,5 +1,6 @@
 package com.arod.security.util;
 
+import com.arod.security.mapper.UserDetailMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -18,9 +19,11 @@ import java.util.Optional;
 public class JWTUtil {
 
     public JWTUtil(@Value("${token.secret}") String key
-            , @Value("${token.expiration}") Long expiration) {
+            , @Value("${token.expiration}") Long expiration
+            , UserDetailMapper mapper) {
         this.expiration = expiration;
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(key));
+        this.mapper = mapper;
     }
 
     public String getToken(HttpServletRequest request) {
@@ -41,6 +44,7 @@ public class JWTUtil {
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000 * expiration))
+                .claim("permissions", mapper.toAuthorityNames(user.getAuthorities()))
                 .compact();
     }
 
@@ -73,6 +77,7 @@ public class JWTUtil {
 
     private final Long expiration;
     private final Key key;
+    private UserDetailMapper mapper;
 
     private static final String AUTHORIZATION = "authorization";
     private static final String BEARER = "Bearer";

@@ -67,7 +67,7 @@ public class UserServiceImpl implements UserService {
 
         mapper.updateValues(request, user);
 
-        if (!StringUtils.hasText(request.getPassword()))
+        if (StringUtils.hasText(request.getPassword()))
             user.setPassword(encoder.encode(request.getPassword()));
 
         user = repository.save(user);

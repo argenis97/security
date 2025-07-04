@@ -26,6 +26,6 @@ public class Role {
     private List<AppUser> users;
 
     @OneToMany(mappedBy = "role", cascade = {CascadeType.MERGE, CascadeType.PERSIST
-            , CascadeType.REFRESH, CascadeType.REMOVE})
+            , CascadeType.REFRESH, CascadeType.REMOVE}, orphanRemoval = true)
     private List<RolePermission> permissions;
 }
