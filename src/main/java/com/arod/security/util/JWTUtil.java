@@ -43,7 +43,7 @@ public class JWTUtil {
                 .signWith(key)
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000 * expiration))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration * 60 * 60 * 1000))
                 .claim("permissions", mapper.toAuthorityNames(user.getAuthorities()))
                 .compact();
     }
@@ -77,7 +77,7 @@ public class JWTUtil {
 
     private final Long expiration;
     private final Key key;
-    private UserDetailMapper mapper;
+    private final UserDetailMapper mapper;
 
     private static final String AUTHORIZATION = "authorization";
     private static final String BEARER = "Bearer";

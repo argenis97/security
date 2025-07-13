@@ -22,10 +22,10 @@ public class Role {
     @Column(name = "name", nullable = false, unique = true)
     private String name;
 
-    @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "role")
     private List<AppUser> users;
 
     @OneToMany(mappedBy = "role", cascade = {CascadeType.MERGE, CascadeType.PERSIST
-            , CascadeType.REFRESH, CascadeType.REMOVE}, orphanRemoval = true)
+            , CascadeType.REFRESH, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<RolePermission> permissions;
 }

@@ -52,7 +52,9 @@ public class JWTFilter extends OncePerRequestFilter {
         if (!jwtUtil.isValid(claims, user))
             return null;
 
-        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user.getUsername(), null, user.getAuthorities());
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user.getUsername()
+                , null, user.getAuthorities());
+
         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
         return auth;

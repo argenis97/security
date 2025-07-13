@@ -24,10 +24,6 @@ public interface UserRepository extends JpaRepository<AppUser, Long> {
 
     Optional<AppUser> findByName(String name);
 
-    @Query("select usr from AppUser usr where usr.name = :name")
-    @EntityGraph(attributePaths = {})
-    Optional<AppUser> findByNameLazy(@Param("name") String name);
-
     @Query("select usr from AppUser usr where usr.id = :id")
     @EntityGraph(attributePaths = {})
     Optional<AppUser> findByIdLazy(@Param("id") Long id);

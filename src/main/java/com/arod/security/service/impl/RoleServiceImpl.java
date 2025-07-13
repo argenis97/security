@@ -9,6 +9,7 @@ import com.arod.security.persistence.repository.PermissionRepository;
 import com.arod.security.persistence.repository.RoleRepository;
 import com.arod.security.service.RoleService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,11 +40,13 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @Transactional
     public RoleResponse save(RoleDTO role) {
         return mapper.toDTO(repository.save(mapper.toEntity(role)));
     }
 
     @Override
+    @Transactional
     public boolean delete(Long id) {
         return repository.findById(id)
                 .map(role -> {
@@ -53,6 +56,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @Transactional
     public Optional<RoleResponse> update(Long id, RoleDTO role) {
         Optional<Role> oRole = repository.findById(id);
 
