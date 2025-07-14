@@ -19,5 +19,5 @@ public interface UserService {
 
     Optional<UserResponseDTO> findByName(String name);
 
-    public List<UserResponseDTO> findAll();
+    List<UserResponseDTO> findAll();
 }
