@@ -1,5 +1,8 @@
 package com.arod.security.config;
 
+import com.arod.security.exception.AbsentTokenException;
+import com.arod.security.exception.InvalidTokenException;
+import com.arod.security.exception.TokenExpiredException;
 import com.arod.security.util.JWTUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -27,7 +30,11 @@ public class JWTFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        SecurityContextHolder.getContext().setAuthentication(authenticate(request));
+        UsernamePasswordAuthenticationToken authenticationToken = authenticate(request);
+
+        if (authenticationToken != null)
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
         filterChain.doFilter(request, response);
     }
 
@@ -35,22 +42,22 @@ public class JWTFilter extends OncePerRequestFilter {
         String token = jwtUtil.getToken(request);
 
         if (!StringUtils.hasText(token))
-            return null;
+            throw new AbsentTokenException("absent.token");
 
         Claims claims = jwtUtil.getClaims(token);
 
         String userName = jwtUtil.getUserName(claims);
 
         if (!StringUtils.hasText(userName))
-            return null;
+            throw new InvalidTokenException("absent.token.username");
 
         UserDetails user = service.loadUserByUsername(userName);
 
-        if (user == null)
-            return null;
+        if (jwtUtil.isExpired(claims))
+            throw new TokenExpiredException("token.expired");
 
         if (!jwtUtil.isValid(claims, user))
-            return null;
+            throw new InvalidTokenException("token.invalid");
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user.getUsername()
                 , null, user.getAuthorities());

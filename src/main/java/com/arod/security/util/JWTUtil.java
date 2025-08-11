@@ -1,12 +1,12 @@
 package com.arod.security.util;
 
+import com.arod.security.config.TokenProperties;
 import com.arod.security.mapper.UserDetailMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -18,11 +18,10 @@ import java.util.Optional;
 @Component
 public class JWTUtil {
 
-    public JWTUtil(@Value("${token.secret}") String key
-            , @Value("${token.expiration}") Long expiration
-            , UserDetailMapper mapper) {
-        this.expiration = expiration;
-        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(key));
+    public JWTUtil(UserDetailMapper mapper, TokenProperties tokenProperties) {
+        this.expiration = tokenProperties.getExpiration();
+        this.expirationRefresh = tokenProperties.getRefresh();
+        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(tokenProperties.getSecret()));
         this.mapper = mapper;
     }
 
@@ -38,12 +37,32 @@ public class JWTUtil {
         return token;
     }
 
+    /**
+     *
+     * @author Argenis Rodríguez
+     * @param user
+     * @return access token
+     */
     public String generateToken(UserDetails user) {
+        return generateToken(user, expiration * 60 * 1000);
+    }
+
+    /**
+     *
+     * @author Argenis Rodríguez
+     * @param user
+     * @return refresh token
+     */
+    public String generateRefreshToken(UserDetails user) {
+        return generateToken(user, expirationRefresh * 60 * 60 * 1000);
+    }
+
+    protected String generateToken(UserDetails user, Long expiration) {
         return Jwts.builder()
                 .signWith(key)
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration * 60 * 60 * 1000))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .claim("permissions", mapper.toAuthorityNames(user.getAuthorities()))
                 .compact();
     }
@@ -75,7 +94,14 @@ public class JWTUtil {
                 .isPresent();
     }
 
+    public boolean isExpired(Claims claims) {
+        return Optional.ofNullable(claims)
+                .filter(cls -> cls.getExpiration().compareTo(new Date(System.currentTimeMillis())) <= 0)
+                .isPresent();
+    }
+
     private final Long expiration;
+    private final Long expirationRefresh;
     private final Key key;
     private final UserDetailMapper mapper;
 

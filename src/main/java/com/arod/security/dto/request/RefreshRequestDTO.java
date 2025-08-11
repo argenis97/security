@@ -1,14 +1,12 @@
-package com.arod.security.dto.response;
+package com.arod.security.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class AuthResponseDTO {
-    private String userName;
-    private String token;
+@NoArgsConstructor
+public class RefreshRequestDTO {
     private String refreshToken;
 }

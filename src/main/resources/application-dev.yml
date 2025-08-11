@@ -16,4 +16,5 @@ server:
     context-path: /users-dev/api
 token:
   expiration: ${TOKEN_EXPIRATION}
+  refresh: ${REFRESH_EXPIRATION}
   secret: ${TOKEN_SECRET}

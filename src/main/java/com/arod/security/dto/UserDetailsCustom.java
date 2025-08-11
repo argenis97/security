@@ -15,5 +15,6 @@ import java.util.List;
 public class UserDetailsCustom implements UserDetails {
     private String username;
     private String password;
+    private Long id;
     private List<SimpleGrantedAuthority> authorities;
 }

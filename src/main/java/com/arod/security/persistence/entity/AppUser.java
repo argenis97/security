@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "user", schema = "application")
 @Data
@@ -29,4 +31,7 @@ public class AppUser {
     @ManyToOne(cascade = {})
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
+
+    @OneToMany(mappedBy = "user")
+    private List<RefreshToken> refreshTokenList;
 }

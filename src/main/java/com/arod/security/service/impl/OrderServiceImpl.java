@@ -29,7 +29,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderResponseDTO> findByVendorID(Long vendorID) {
-        return repository.findByVendorID(vendorID)
+        return repository.findByVendor_Id(vendorID)
                 .stream().map(mapper::toDTO)
                 .toList();
     }
