@@ -8,4 +8,6 @@ public interface AuthenticationService {
     AuthResponseDTO authenticate(AuthRequestDTO request);
 
     AuthResponseDTO refresh(RefreshRequestDTO refresh);
+
+    boolean logout(RefreshRequestDTO refresh);
 }

@@ -5,12 +5,10 @@ import com.arod.security.dto.request.AuthRequestDTO;
 import com.arod.security.dto.request.RefreshRequestDTO;
 import com.arod.security.dto.response.AuthResponseDTO;
 import com.arod.security.exception.InvalidTokenException;
-import com.arod.security.exception.RefreshTokenNotFound;
 import com.arod.security.exception.TokenExpiredException;
-import com.arod.security.persistence.entity.AppUser;
 import com.arod.security.persistence.entity.RefreshToken;
-import com.arod.security.persistence.repository.RefreshTokenRepository;
 import com.arod.security.service.AuthenticationService;
+import com.arod.security.service.RefreshTokenService;
 import com.arod.security.util.JWTUtil;
 import io.jsonwebtoken.Claims;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,19 +20,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.Optional;
-
 @Service
 public class AuthenticationServiceImpl implements AuthenticationService {
 
     public AuthenticationServiceImpl(JWTUtil jwtUtil, AuthenticationManager authManager
-        , RefreshTokenRepository tokenRepository, UserDetailsService userDetailsService) {
+        , UserDetailsService userDetailsService, RefreshTokenService tokenService) {
         this.jwtUtil = jwtUtil;
         this.authManager = authManager;
-        this.tokenRepository = tokenRepository;
         this.userDetailsService = userDetailsService;
+        this.tokenService = tokenService;
     }
 
     @Override
@@ -47,29 +41,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String refreshToken = jwtUtil.generateRefreshToken(userDetails);
 
-        generateRefreshToken(userDetails, refreshToken);
+        tokenService.createToken(userDetails.getId(), refreshToken);
 
         return new AuthResponseDTO(userDetails.getUsername()
                 , jwtUtil.generateToken(userDetails)
                 , refreshToken);
-    }
-
-    protected void generateRefreshToken(UserDetailsCustom user, String token) {
-        Claims claims = jwtUtil.getClaims(token);
-
-        RefreshToken rToken = new RefreshToken();
-        rToken.setToken(token);
-        rToken.setAttempts(0L);
-        rToken.setRevoked(false);
-        rToken.setGenDate(LocalDateTime.now());
-        rToken.setExpirationDate(new Timestamp(claims.getExpiration().getTime()).toLocalDateTime());
-
-        AppUser appUser = new AppUser();
-        appUser.setId(user.getId());
-
-        rToken.setUser(appUser);
-
-        tokenRepository.save(rToken);
     }
 
     @Override
@@ -88,39 +64,59 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (!StringUtils.hasText(userName))
             throw new InvalidTokenException("absent.token.username");
 
-        Optional<RefreshToken> oRefresh = tokenRepository.findByToken(token);
-
-        if (oRefresh.isEmpty())
-            throw new RefreshTokenNotFound("token.not.found");
+        RefreshToken refer = tokenService.findByToken(token);
 
         UserDetailsCustom user = (UserDetailsCustom) userDetailsService.loadUserByUsername(userName);
 
         if (!jwtUtil.isValid(claims, user))
             throw new InvalidTokenException("token.invalid");
 
-        RefreshToken refer = oRefresh.get();
-
         if (refer.isRevoked())
         {
-            /*refer.setAttempts(refer.getAttempts() + 1);
-            tokenRepository.save(refer);*/
+            tokenService.addAttempt(refer);
             throw new InvalidTokenException("refresh.token.revoked");
         }
 
-        refer.setRevoked(true);
-        tokenRepository.save(refer);
+        tokenService.revoke(refer);
 
         String refreshToken = jwtUtil.generateRefreshToken(user);
 
-        generateRefreshToken(user, refreshToken);
+        tokenService.createToken(user.getId(), refreshToken);
 
         return new AuthResponseDTO(userName
                 , jwtUtil.generateToken(user)
                 , refreshToken);
     }
 
+    @Override
+    public boolean logout(RefreshRequestDTO refresh) {
+
+        String token = refresh.getRefreshToken();
+
+        Claims claims = jwtUtil.getClaims(token);
+
+        if (jwtUtil.isExpired(claims))
+            throw new TokenExpiredException("token.expired");
+
+        String userName = jwtUtil.getUserName(claims);
+
+        if (!StringUtils.hasText(userName))
+            throw new InvalidTokenException("absent.token.username");
+
+        UserDetails user = userDetailsService.loadUserByUsername(userName);
+
+        if (!jwtUtil.isValid(claims, user))
+            throw new InvalidTokenException("token.invalid");
+
+        RefreshToken refreshToken = tokenService.findByToken(token);
+
+        tokenService.revoke(refreshToken);
+
+        return true;
+    }
+
     private final JWTUtil jwtUtil;
     private final AuthenticationManager authManager;
-    private final RefreshTokenRepository tokenRepository;
     private final UserDetailsService userDetailsService;
+    private final RefreshTokenService tokenService;
 }
